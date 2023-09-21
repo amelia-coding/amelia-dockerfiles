@@ -1,0 +1,20 @@
+FROM jenkins/inbound-agent:alpine as jnlp
+FROM node:16-buster
+
+USER root
+SHELL ["/bin/bash", "-c"]
+
+RUN echo $'deb https://mirrors.ustc.edu.cn/debian/ buster main contrib non-free \n\
+    deb https://mirrors.ustc.edu.cn/debian/ buster-updates main contrib non-free \n\
+    deb https://mirrors.ustc.edu.cn/debian/ buster-backports main contrib non-free \n\
+    deb https://mirrors.ustc.edu.cn/debian-security/ buster/updates main contrib non-free' > /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y openjdk-11-jre git \
+    && apt-get clean
+RUN npm install -g pnpm@8.6.7
+
+
+COPY --from=jnlp /usr/local/bin/jenkins-agent /usr/local/bin/jenkins-agent
+COPY --from=jnlp /usr/share/jenkins/agent.jar /usr/share/jenkins/agent.jar
+
+ENTRYPOINT ["/usr/local/bin/jenkins-agent"]
